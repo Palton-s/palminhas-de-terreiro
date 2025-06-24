@@ -159,8 +159,6 @@
                 <option value="x x x o">Ritmo 3: x x x o</option>
             </select>
         </div>
-        <!-- Audio para palma -->
-        <audio id="clapSound" src="palma.mp3"></audio>
     </div>
     <!-- Bootstrap JS (opcional, para componentes interativos) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -168,51 +166,28 @@
         const playBtn = document.querySelector('.play-btn');
         const playButton = playBtn.closest('button');
         const select = document.getElementById('multiSelect');
-        const clap = document.getElementById('clapSound');
         const slider = document.getElementById('customRange');
         const velocidadeLabel = document.getElementById('velocidadeLabel');
-        let isPlaying = false;
-        let nextEventTime = 0;
-        let currentStep = 0;
-        let rafId = null;
 
-        // Define os ritmos e o tempo entre passos (ms)
+        // Web Audio API setup
+        let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isPlaying = false;
+        let currentNote = 0;
+        let nextNoteTime = 0.0;
+        let timerID = null;
+        const lookahead = 25.0; // ms
+        const scheduleAheadTime = 0.1; // s
+
         const rhythms = {
             "x o x o": ["x", "o", "x", "o"],
             "x x x o": ["x", "x", "x", "o"]
         };
-        // Valores de intervalo (ms)
-        const minStep = 100; // mais rápido
-        const maxStep = 600; // mais lento
+        const minStep = 100; // ms
+        const maxStep = 600; // ms
 
         function getStepDuration() {
             const sliderValue = parseInt(slider.value, 10);
-            // Interpolação inversa: quanto maior o slider, mais lento
             return minStep + ((maxStep - minStep) * (100 - sliderValue) / 100);
-        }
-
-        function getStepDurationForValue(sliderValue) {
-            return minStep + ((maxStep - minStep) * (100 - sliderValue) / 100);
-        }
-
-        function buildBuffer() {
-            buffer = [];
-            const selected = select.value;
-            const pattern = rhythms[selected];
-            if (!pattern) return;
-            let sliderValue = parseInt(slider.value, 10);
-            let stepDuration = getStepDurationForValue(sliderValue);
-            let t = 0;
-            // Gera eventos para 40 ciclos do padrão para um buffer bem maior
-            for (let repeat = 0; repeat < 40; repeat++) {
-                for (let i = 0; i < pattern.length; i++) {
-                    buffer.push({
-                        type: pattern[i],
-                        time: t
-                    });
-                    t += stepDuration;
-                }
-            }
         }
 
         function updateStepDurationLabel() {
@@ -220,50 +195,53 @@
         }
 
         slider.addEventListener('input', updateStepDurationLabel);
-
-        // Inicializa label
         updateStepDurationLabel();
 
-        function scheduleNextClap() {
-            if (!isPlaying) return;
-            const pattern = rhythms[select.value];
-            if (!pattern) return;
+        function nextNote() {
+            let stepDuration = getStepDuration() / 1000.0; // ms → s
+            nextNoteTime += stepDuration;
+            currentNote = (currentNote + 1) % rhythms[select.value].length;
+        }
 
-            const now = performance.now();
-            if (now >= nextEventTime) {
-                if (pattern[currentStep] === "x") {
-                    clap.currentTime = 0;
-                    clap.play();
-                }
-                // Calcula o tempo do próximo evento com base no valor ATUAL do slider
-                const stepDuration = getStepDuration();
-                nextEventTime = now + stepDuration;
-                currentStep = (currentStep + 1) % pattern.length;
+        function scheduleNote(time) {
+            const pattern = rhythms[select.value];
+            if (pattern[currentNote] === "x") {
+                let osc = audioCtx.createOscillator();
+                osc.type = "square";
+                osc.frequency.value = 880;
+                osc.connect(audioCtx.destination);
+                osc.start(time);
+                osc.stop(time + 0.05);
             }
-            rafId = requestAnimationFrame(scheduleNextClap);
+        }
+
+        function scheduler() {
+            while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
+                scheduleNote(nextNoteTime);
+                nextNote();
+            }
+            timerID = setTimeout(scheduler, lookahead);
         }
 
         function startRhythm() {
             stopRhythm();
-            currentStep = 0;
-            nextEventTime = performance.now();
-            rafId = requestAnimationFrame(scheduleNextClap);
+            currentNote = 0;
+            nextNoteTime = audioCtx.currentTime + 0.05;
+            scheduler();
+            isPlaying = true;
         }
 
         function stopRhythm() {
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = null;
-            currentStep = 0;
+            clearTimeout(timerID);
+            timerID = null;
+            isPlaying = false;
         }
 
-        slider.addEventListener('input', () => {
-            updateStepDurationLabel();
-            // Não reinicia o ritmo, apenas o tempo do próximo evento será ajustado no próximo loop
-        });
-
         playButton.addEventListener('click', () => {
-            isPlaying = !isPlaying;
-            if (isPlaying) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            if (!isPlaying) {
                 playBtn.classList.remove('bi-play-fill');
                 playBtn.classList.add('bi-pause-fill');
                 startRhythm();
@@ -279,6 +257,9 @@
                 startRhythm();
             }
         });
+
+        // Atualiza o ritmo em tempo real ao mexer no slider (não reinicia, só afeta o próximo passo)
+        slider.addEventListener('input', updateStepDurationLabel);
     </script>
 </body>
 </html>
