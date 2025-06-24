@@ -163,6 +163,13 @@
     <!-- Bootstrap JS (opcional, para componentes interativos) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // NOTA IMPORTANTE: Para que este projeto funcione, você deve acessá-lo
+        // através de um servidor web (ex: http://localhost/palminhas-de-terreiro/),
+        // e não abrindo o arquivo HTML diretamente no navegador (file:///...).
+        // Isso é necessário porque o navegador bloqueia o carregamento de arquivos
+        // de áudio por razões de segurança (CORS) quando a página não é servida
+        // por um servidor.
+
         const playBtn = document.querySelector('.play-btn');
         const playButton = playBtn.closest('button');
         const select = document.getElementById('multiSelect');
@@ -185,13 +192,6 @@
         const minStep = 100; // ms
         const maxStep = 600; // ms
 
-        // Carregar palmas.mp3 como AudioBuffer
-        let clapBuffer = null;
-        fetch('palmas.mp3')
-            .then(response => response.arrayBuffer())
-            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
-            .then(buffer => { clapBuffer = buffer; });
-
         function getStepDuration() {
             const sliderValue = parseInt(slider.value, 10);
             return minStep + ((maxStep - minStep) * (100 - sliderValue) / 100);
@@ -208,6 +208,21 @@
             let stepDuration = getStepDuration() / 1000.0; // ms → s
             nextNoteTime += stepDuration;
             currentNote = (currentNote + 1) % rhythms[select.value].length;
+        }
+
+        // Carregar palma.mp3 como AudioBuffer
+        let clapBuffer = null;
+        let clapLoadPromise = null;
+        function loadClapBuffer() {
+            if (clapLoadPromise) return clapLoadPromise;
+            clapLoadPromise = fetch('palma.mp3')
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+                .then(buffer => {
+                    clapBuffer = buffer;
+                    return buffer;
+                });
+            return clapLoadPromise;
         }
 
         function scheduleNote(time) {
@@ -242,11 +257,13 @@
             isPlaying = false;
         }
 
-        playButton.addEventListener('click', () => {
+        playButton.addEventListener('click', async () => {
             if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+                await audioCtx.resume();
             }
+            
             if (!isPlaying) {
+                await loadClapBuffer();
                 playBtn.classList.remove('bi-play-fill');
                 playBtn.classList.add('bi-pause-fill');
                 startRhythm();
