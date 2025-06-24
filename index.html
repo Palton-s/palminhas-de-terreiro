@@ -171,7 +171,7 @@
         const slider = document.getElementById('customRange');
         const velocidadeLabel = document.getElementById('velocidadeLabel');
         let isPlaying = false;
-        let rhythmInterval = null;
+        let rhythmTimeout = null;
         let currentStep = 0;
 
         // Define os ritmos e o tempo entre passos (ms)
@@ -182,47 +182,44 @@
         // Valores de intervalo (ms)
         const minStep = 100; // mais rápido
         const maxStep = 600; // mais lento
-        let stepDuration = 400; // valor inicial
 
-        // Atualiza o stepDuration conforme o slider
-        function updateStepDuration() {
+        function getStepDuration() {
             const sliderValue = parseInt(slider.value, 10);
             // Interpolação inversa: quanto maior o slider, mais lento
-            stepDuration = minStep + ((maxStep - minStep) * (100 - sliderValue) / 100);
-            velocidadeLabel.textContent = `Velocidade: ${sliderValue}`;
+            return minStep + ((maxStep - minStep) * (100 - sliderValue) / 100);
         }
 
-        slider.addEventListener('input', () => {
-            updateStepDuration();
-            if (isPlaying) {
-                stopRhythm();
-                playRhythm();
-            }
-        });
+        function updateStepDurationLabel() {
+            velocidadeLabel.textContent = `Velocidade: ${slider.value}`;
+        }
 
-        // Inicializa label e stepDuration
-        updateStepDuration();
+        slider.addEventListener('input', updateStepDurationLabel);
 
-        function playRhythm() {
+        // Inicializa label
+        updateStepDurationLabel();
+
+        function playRhythmStep() {
+            if (!isPlaying) return;
             const selected = select.value;
             const pattern = rhythms[selected];
             if (!pattern) return;
-            currentStep = 0;
-            // Garante que não há intervalos duplicados
+            if (pattern[currentStep] === "x") {
+                clap.currentTime = 0;
+                clap.play();
+            }
+            currentStep = (currentStep + 1) % pattern.length;
+            rhythmTimeout = setTimeout(playRhythmStep, getStepDuration());
+        }
+
+        function startRhythm() {
             stopRhythm();
-            rhythmInterval = setInterval(() => {
-                if (!isPlaying) return;
-                if (pattern[currentStep] === "x") {
-                    clap.currentTime = 0;
-                    clap.play();
-                }
-                currentStep = (currentStep + 1) % pattern.length;
-            }, stepDuration);
+            currentStep = 0;
+            playRhythmStep();
         }
 
         function stopRhythm() {
-            clearInterval(rhythmInterval);
-            rhythmInterval = null;
+            clearTimeout(rhythmTimeout);
+            rhythmTimeout = null;
         }
 
         playButton.addEventListener('click', () => {
@@ -230,7 +227,7 @@
             if (isPlaying) {
                 playBtn.classList.remove('bi-play-fill');
                 playBtn.classList.add('bi-pause-fill');
-                playRhythm();
+                startRhythm();
             } else {
                 playBtn.classList.remove('bi-pause-fill');
                 playBtn.classList.add('bi-play-fill');
@@ -238,11 +235,10 @@
             }
         });
 
-        // Parar ritmo ao trocar seleção
+        // Parar ritmo ao trocar seleção e reiniciar do começo
         select.addEventListener('change', () => {
             if (isPlaying) {
-                stopRhythm();
-                playRhythm();
+                startRhythm();
             }
         });
     </script>
