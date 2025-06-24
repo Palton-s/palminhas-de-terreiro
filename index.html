@@ -172,9 +172,8 @@
         const slider = document.getElementById('customRange');
         const velocidadeLabel = document.getElementById('velocidadeLabel');
         let isPlaying = false;
-        let buffer = [];
-        let bufferStartTime = 0;
-        let bufferIndex = 0;
+        let nextEventTime = 0;
+        let currentStep = 0;
         let rafId = null;
 
         // Define os ritmos e o tempo entre passos (ms)
@@ -225,65 +224,41 @@
         // Inicializa label
         updateStepDurationLabel();
 
-        function playRhythmStep() {
+        function scheduleNextClap() {
             if (!isPlaying) return;
-            const selected = select.value;
-            const pattern = rhythms[selected];
+            const pattern = rhythms[select.value];
             if (!pattern) return;
-            if (pattern[currentStep] === "x") {
-                clap.currentTime = 0;
-                clap.play();
-            }
-            currentStep = (currentStep + 1) % pattern.length;
-            rhythmTimeout = setTimeout(playRhythmStep, getStepDuration());
-        }
 
-        function startBufferPlayback() {
-            bufferStartTime = performance.now();
-            bufferIndex = 0;
-            rafId = requestAnimationFrame(bufferLoop);
-        }
-
-        function bufferLoop() {
-            if (!isPlaying || bufferIndex >= buffer.length) return;
             const now = performance.now();
-            while (
-                bufferIndex < buffer.length &&
-                now - bufferStartTime >= buffer[bufferIndex].time
-            ) {
-                if (buffer[bufferIndex].type === "x") {
+            if (now >= nextEventTime) {
+                if (pattern[currentStep] === "x") {
                     clap.currentTime = 0;
                     clap.play();
                 }
-                bufferIndex++;
+                // Calcula o tempo do próximo evento com base no valor ATUAL do slider
+                const stepDuration = getStepDuration();
+                nextEventTime = now + stepDuration;
+                currentStep = (currentStep + 1) % pattern.length;
             }
-            if (bufferIndex < buffer.length) {
-                rafId = requestAnimationFrame(bufferLoop);
-            } else {
-                // Recomeça o buffer para tocar em loop
-                buildBuffer();
-                startBufferPlayback();
-            }
+            rafId = requestAnimationFrame(scheduleNextClap);
         }
 
         function startRhythm() {
             stopRhythm();
-            buildBuffer();
-            startBufferPlayback();
+            currentStep = 0;
+            nextEventTime = performance.now();
+            rafId = requestAnimationFrame(scheduleNextClap);
         }
 
         function stopRhythm() {
             if (rafId) cancelAnimationFrame(rafId);
             rafId = null;
-            buffer = [];
-            bufferIndex = 0;
+            currentStep = 0;
         }
 
         slider.addEventListener('input', () => {
             updateStepDurationLabel();
-            if (isPlaying) {
-                startRhythm();
-            }
+            // Não reinicia o ritmo, apenas o tempo do próximo evento será ajustado no próximo loop
         });
 
         playButton.addEventListener('click', () => {
@@ -299,7 +274,6 @@
             }
         });
 
-        // Parar ritmo ao trocar seleção e reiniciar do começo
         select.addEventListener('change', () => {
             if (isPlaying) {
                 startRhythm();
