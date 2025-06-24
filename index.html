@@ -220,7 +220,7 @@
         let clapLoadPromise = null;
         function loadClapBuffer() {
             if (clapLoadPromise) return clapLoadPromise;
-            clapLoadPromise = fetch('palma.mp3')
+            clapLoadPromise = fetch('hand-clap-1-36401.mp3')
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
                 .then(buffer => {
