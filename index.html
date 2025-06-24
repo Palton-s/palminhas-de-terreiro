@@ -164,6 +164,7 @@
                 <option value="x x x o">Ritmo 3: x x x o</option>
                 <option value="o x o o o x o o o x o o o x o o">Ritmo 4: o x o o o x o o o x o o o x o o</option>
                 <option value="x x o x x x o o x x o o x x o o">Ritmo 5: x x o x x x o o x x o o x x o o</option>
+                <option value="y x o y x x o o y y o o x x o o">Ritmo 6: y x o y x x o o y y o o x x o o</option>
             </select>
         </div>
     </div>
@@ -197,7 +198,8 @@
             "x x x o": ["x", "x", "x", "o"],
             "o x o o o x o o o x o o o x o o" : ["o", "x", "o", "o", "o", "x", "o", "o", "o", "x", "o", "o", "o", "x", "o", "o"],
             //xxoxxxooxxooxxoo 
-            "x x o x x x o o x x o o x x o o":  ["x", "x", "o", "x", "x", "x", "o", "o", "x", "x", "o", "o", "x", "x", "o", "o"]
+            "x x o x x x o o x x o o x x o o":  ["x", "x", "o", "x", "x", "x", "o", "o", "x", "x", "o", "o", "x", "x", "o", "o"],
+            "a t o a t t o o a a o o t t o o": ["tá", "tum", "o", "tá", "tum", "tum", "o", "o", "tá", "tá", "o", "o", "tum", "tum", "o", "o"]
         };
         const minStep = 100; // ms
         const maxStep = 600; // ms
@@ -220,26 +222,46 @@
             currentNote = (currentNote + 1) % rhythms[select.value].length;
         }
 
-        // Carregar palma.mp3 como AudioBuffer
-        let clapBuffer = null;
-        let clapLoadPromise = null;
-        function loadClapBuffer() {
-            if (clapLoadPromise) return clapLoadPromise;
-            clapLoadPromise = fetch('hand-clap-1-36401.mp3')
-                .then(response => response.arrayBuffer())
-                .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
-                .then(buffer => {
-                    clapBuffer = buffer;
-                    return buffer;
-                });
-            return clapLoadPromise;
+        // Mapeamento e carregamento de sons
+        const soundFiles = {
+            'x': 'palmas.mp3',
+            'y': 'hand-clap-1-36401.mp3',
+            'a': 'ta.mp3',
+            't': 'tum.mp3',
+        };
+        const soundBuffers = {};
+        let allSoundsPromise = null;
+
+        function loadAllSounds() {
+            if (allSoundsPromise) return allSoundsPromise;
+
+            const promises = Object.entries(soundFiles).map(([key, url]) => {
+                return fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Erro ao carregar ${url}`);
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+                    .then(buffer => {
+                        soundBuffers[key] = buffer;
+                    });
+            });
+
+            allSoundsPromise = Promise.all(promises).catch(e => {
+                console.error("Falha ao carregar um ou mais sons:", e);
+                allSoundsPromise = null; // Permite tentar novamente
+            });
+            return allSoundsPromise;
         }
 
         function scheduleNote(time) {
             const pattern = rhythms[select.value];
-            if (pattern[currentNote] === "x" && clapBuffer) {
+            const noteType = pattern[currentNote];
+            
+            const buffer = soundBuffers[noteType];
+            if (buffer) {
                 let source = audioCtx.createBufferSource();
-                source.buffer = clapBuffer;
+                source.buffer = buffer;
                 source.connect(audioCtx.destination);
                 source.start(time);
             }
@@ -273,7 +295,7 @@
             }
             
             if (!isPlaying) {
-                await loadClapBuffer();
+                await loadAllSounds();
                 playBtn.classList.remove('bi-play-fill');
                 playBtn.classList.add('bi-pause-fill');
                 startRhythm();
