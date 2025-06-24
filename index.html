@@ -15,7 +15,8 @@
         body, html {
             height: 100%;
             font-family: 'Inter', 'Roboto', sans-serif;
-            background: #f8fafc;
+            background: #fdf8f0; /* Creme claro */
+            color: #4b3832; /* Marrom escuro para texto */
         }
         .center-content {
             min-height: 100vh;
@@ -35,14 +36,18 @@
         .btn-primary.rounded-circle {
             width: 110px;
             height: 110px;
-            box-shadow: 0 6px 24px 0 rgba(0, 80, 200, 0.13);
-            transition: box-shadow 0.2s, transform 0.18s;
+            background-color: #6d4c41; /* Tom de marrom (atabaque) */
+            border-color: #6d4c41;
+            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.13);
+            transition: box-shadow 0.2s, transform 0.18s, background-color 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .btn-primary.rounded-circle:hover, .btn-primary.rounded-circle:focus {
-            box-shadow: 0 10px 32px 0 rgba(0, 80, 200, 0.22);
+            background-color: #5d4037; /* Marrom mais escuro no hover */
+            border-color: #5d4037;
+            box-shadow: 0 10px 32px 0 rgba(0, 0, 0, 0.22);
             transform: scale(1.07);
             filter: brightness(1.08);
         }
@@ -52,57 +57,56 @@
             margin-bottom: 2.2rem !important;
         }
         .form-range {
-            accent-color: #0d6efd;
+            accent-color: #8d6e63; /* Tom de marrom/cobre para o slider */
             height: 0.6rem;
-            background: linear-gradient(90deg, #0d6efd 0%, #0d6efd 50%, #e9ecef 50%, #e9ecef 100%);
             border-radius: 8px;
             transition: background 0.3s;
         }
         .form-range::-webkit-slider-thumb {
-            background: #0d6efd;
+            background: #6d4c41; /* Marrom principal */
             border: 3px solid #fff;
-            box-shadow: 0 2px 8px rgba(13,110,253,0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             width: 28px;
             height: 28px;
             border-radius: 50%;
             transition: box-shadow 0.2s;
         }
         .form-range:focus::-webkit-slider-thumb {
-            box-shadow: 0 4px 16px rgba(13,110,253,0.35);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         }
         .form-range::-moz-range-thumb {
-            background: #0d6efd;
+            background: #6d4c41; /* Marrom principal */
             border: 3px solid #fff;
-            box-shadow: 0 2px 8px rgba(13,110,253,0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             width: 28px;
             height: 28px;
             border-radius: 50%;
             transition: box-shadow 0.2s;
         }
         .form-range:focus::-moz-range-thumb {
-            box-shadow: 0 4px 16px rgba(13,110,253,0.35);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         }
         .form-range::-ms-thumb {
-            background: #0d6efd;
+            background: #6d4c41; /* Marrom principal */
             border: 3px solid #fff;
-            box-shadow: 0 2px 8px rgba(13,110,253,0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             width: 28px;
             height: 28px;
             border-radius: 50%;
             transition: box-shadow 0.2s;
         }
         .form-range:focus::-ms-thumb {
-            box-shadow: 0 4px 16px rgba(13,110,253,0.35);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         }
         .form-range::-webkit-slider-thumb:hover {
-            box-shadow: 0 4px 16px rgba(13,110,253,0.35);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         }
         .form-range::-webkit-slider-runnable-track {
             height: 0.6rem;
             border-radius: 8px;
         }
         .form-range::-ms-fill-lower {
-            background: #0d6efd;
+            background: #8d6e63; /* Tom de marrom/cobre */
         }
         .form-range::-ms-fill-upper {
             background: #e9ecef;
@@ -117,7 +121,7 @@
         }
         .form-label {
             font-weight: 600;
-            color: #495057;
+            color: #4b3832; /* Marrom escuro */
             letter-spacing: 0.01em;
             font-size: 1.08rem;
             margin-bottom: 0.5rem;
@@ -132,7 +136,7 @@
         }
         #velocidadeLabel {
             font-weight: 500;
-            color: #0d6efd;
+            color: #6d4c41; /* Marrom principal */
             font-size: 1.08rem;
             margin-right: 0.7rem;
         }
