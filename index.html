@@ -185,6 +185,13 @@
         const minStep = 100; // ms
         const maxStep = 600; // ms
 
+        // Carregar palmas.mp3 como AudioBuffer
+        let clapBuffer = null;
+        fetch('palmas.mp3')
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+            .then(buffer => { clapBuffer = buffer; });
+
         function getStepDuration() {
             const sliderValue = parseInt(slider.value, 10);
             return minStep + ((maxStep - minStep) * (100 - sliderValue) / 100);
@@ -205,13 +212,11 @@
 
         function scheduleNote(time) {
             const pattern = rhythms[select.value];
-            if (pattern[currentNote] === "x") {
-                let osc = audioCtx.createOscillator();
-                osc.type = "square";
-                osc.frequency.value = 880;
-                osc.connect(audioCtx.destination);
-                osc.start(time);
-                osc.stop(time + 0.05);
+            if (pattern[currentNote] === "x" && clapBuffer) {
+                let source = audioCtx.createBufferSource();
+                source.buffer = clapBuffer;
+                source.connect(audioCtx.destination);
+                source.start(time);
             }
         }
 
