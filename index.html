@@ -201,12 +201,11 @@
             const selected = select.value;
             const pattern = rhythms[selected];
             if (!pattern) return;
-            let now = performance.now();
             let sliderValue = parseInt(slider.value, 10);
             let stepDuration = getStepDurationForValue(sliderValue);
             let t = 0;
-            // Gera eventos para 4 ciclos do padrão (pode ajustar para mais ciclos se quiser)
-            for (let repeat = 0; repeat < 4; repeat++) {
+            // Gera eventos para 40 ciclos do padrão para um buffer bem maior
+            for (let repeat = 0; repeat < 40; repeat++) {
                 for (let i = 0; i < pattern.length; i++) {
                     buffer.push({
                         type: pattern[i],
